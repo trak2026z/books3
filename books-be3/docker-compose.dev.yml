@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:15
+    container_name: books_db_dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: booksdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d booksdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    container_name: books_backend_dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/booksdb
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"   # API
+      - "9229:9229"   # debug (opcjonalnie)
+    # bind-mounty dla kodu, ale node_modules trzymamy w osobnym wolumenie
+    volumes:
+      - .:/app:cached
+      - node_modules_dev:/app/node_modules
+    command: sh -lc "npm install && npm run dev:start"
+
+volumes:
+  pgdata_dev:
+  node_modules_dev:

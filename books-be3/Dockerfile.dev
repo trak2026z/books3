@@ -1,0 +1,19 @@
+# DEV image: pełne devDependencies + watch
+FROM node:20-alpine
+
+WORKDIR /app
+RUN apk add --no-cache openssl bash libc6-compat
+
+# instalacja zależności (z devDeps)
+COPY package*.json ./
+RUN npm install
+
+# minimalny set plików na start (resztę wniesie bind-mount)
+COPY prisma ./prisma
+COPY tsconfig*.json nest-cli.json ./
+COPY src ./src
+
+EXPOSE 3000 9229
+
+# start: generacja klienta + migracje + nest --watch
+CMD ["sh", "-lc", "npm run dev:start"]

@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:15
+    container_name: books_db_dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: booksdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d booksdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    container_name: books_backend_dev
+    build:
+      context: ./books-be3   # <--- ścieżka do katalogu BE
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/booksdb
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - ./books-be3:/app:cached
+      - be_node_modules_dev:/app/node_modules
+    command: sh -lc "npm install && npm run dev:start"
+
+  frontend:
+    container_name: books_frontend_dev
+    build:
+      context: ./booksFE3   # <--- ścieżka do katalogu FE
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_URL: http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./booksFE3:/app:cached
+      - fe_node_modules_dev:/app/node_modules
+      - ./booksFE3/.env:/app/.env:ro
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  pgdata_dev:
+  be_node_modules_dev:
+  fe_node_modules_dev:
