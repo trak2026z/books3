@@ -38,7 +38,7 @@ services:
   frontend:
     container_name: books_frontend_dev
     build:
-      context: ./booksFE3   # <--- ścieżka do katalogu FE
+      context: ./booksFE3
       dockerfile: Dockerfile.dev
     environment:
       VITE_API_URL: http://localhost:3000
@@ -51,7 +51,9 @@ services:
       - ./booksFE3:/app:cached
       - fe_node_modules_dev:/app/node_modules
       - ./booksFE3/.env:/app/.env:ro
-    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0"
+    # instalacja zawsze przy starcie
+    command: sh -lc "if [ -f package-lock.json ]; then npm ci; else npm install; fi && npm run dev -- --host 0.0.0.0"
+
 
 volumes:
   pgdata_dev:
