@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Query, Post, Body } from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
+import { GetBooksQueryDto } from './dto/get-books.query.dto';
 
 @Controller('books')
 export class BooksController {
@@ -12,7 +13,7 @@ export class BooksController {
   }
 
   @Get()
-  findAll() {
-    return this.booksService.findAll();
+  findAll(@Query() query: GetBooksQueryDto) {
+    return this.booksService.findPaginated(query);
   }
 }
